@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przewodnik Testera — Brzytwa 💈</title>
+<style>
+  :root {
+    --red: #b91c1c; --red-light: #fef2f2; --red-mid: #fee2e2;
+    --green: #15803d; --green-light: #f0fdf4;
+    --amber: #b45309; --amber-light: #fffbeb;
+    --blue: #1d4ed8; --blue-light: #eff6ff;
+    --purple: #6d28d9; --purple-light: #f5f3ff;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-300: #d1d5db; --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827;
+    --radius: 12px; --shadow: 0 2px 8px rgba(0,0,0,.09); --shadow-lg: 0 4px 20px rgba(0,0,0,.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--gray-50); color: var(--gray-900); font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: #111; color: #fff;
+    padding: 11px 18px 9px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.5);
+  }
+  .top-bar-logo { font-size: 17px; font-weight: 800; white-space: nowrap; }
+  .top-bar-logo span { color: var(--red); }
+  .progress-wrap { flex: 1; min-width: 0; }
+  .progress-label { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+  .progress-bar-bg { background: #333; border-radius: 6px; height: 7px; overflow: hidden; }
+  .progress-bar-fill {
+    background: linear-gradient(90deg, var(--red), #ef4444);
+    height: 100%; border-radius: 6px; min-width: 3px;
+    transition: width .4s ease;
+  }
+
+  /* LAYOUT */
+  .container { max-width: 720px; margin: 0 auto; padding: 22px 15px 64px; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    color: #fff; border-radius: var(--radius); padding: 30px 22px;
+    margin-bottom: 22px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: "✂"; position: absolute; font-size: 130px; opacity: .04;
+    top: -24px; right: -10px; line-height: 1;
+  }
+  .hero-badge {
+    display: inline-block; background: var(--red); color: #fff;
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+    padding: 3px 11px; border-radius: 20px; margin-bottom: 13px;
+  }
+  .hero h1 { font-size: 25px; font-weight: 800; margin-bottom: 7px; line-height: 1.2; }
+  .hero p { font-size: 14px; color: #ccc; max-width: 460px; margin: 0 auto; }
+
+  /* COMPLETION */
+  .completion-banner {
+    display: none; background: linear-gradient(135deg, #15803d, #166534);
+    color: #fff; border-radius: var(--radius); padding: 26px 22px;
+    text-align: center; margin-bottom: 22px; box-shadow: var(--shadow-lg);
+  }
+  .completion-banner.visible { display: block; }
+  .completion-banner .cb-icon { font-size: 44px; margin-bottom: 9px; display: block; }
+  .completion-banner h2 { font-size: 21px; font-weight: 800; margin-bottom: 7px; }
+  .completion-banner p { font-size: 14px; color: #a7f3d0; }
+
+  /* SECTION DIVIDER */
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 26px 0 18px; color: var(--gray-500);
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--gray-200);
+  }
+
+  /* CARDS */
+  .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; }
+  .card-header {
+    padding: 16px 18px 13px; cursor: pointer;
+    display: flex; align-items: flex-start; gap: 13px; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card-header:hover { background: var(--gray-50); }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px; flex-shrink: 0;
+  }
+  .icon-red { background: var(--red-light); }
+  .icon-green { background: var(--green-light); }
+  .icon-amber { background: var(--amber-light); }
+  .icon-blue { background: var(--blue-light); }
+  .icon-purple { background: var(--purple-light); }
+  .icon-gray { background: var(--gray-100); }
+  .card-heading { flex: 1; min-width: 0; }
+  .card-scenario { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--gray-500); margin-bottom: 2px; }
+  .card-title { font-size: 17px; font-weight: 700; color: var(--gray-900); line-height: 1.25; }
+  .card-subtitle { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+  .card-chip {
+    font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
+    margin-top: 5px; display: inline-block;
+  }
+  .chip-done { background: var(--green-light); color: var(--green); }
+  .chip-todo { background: var(--gray-100); color: var(--gray-500); }
+  .card-toggle { font-size: 20px; color: var(--gray-300); transition: transform .22s; flex-shrink: 0; margin-top: 3px; }
+  .card.open .card-toggle { transform: rotate(180deg); }
+  .card-body { display: none; padding: 18px; border-top: 1px solid var(--gray-100); }
+  .card.open .card-body { display: block; }
+
+  /* STEPS */
+  .steps { display: flex; flex-direction: column; gap: 12px; }
+  .step {
+    display: flex; gap: 13px; align-items: flex-start;
+    padding: 13px 15px; border-radius: 10px;
+    background: var(--gray-50); border: 1.5px solid transparent;
+    transition: border-color .18s, background .18s;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .step.checked { background: var(--green-light); border-color: #86efac; }
+  .step-check {
+    appearance: none; -webkit-appearance: none;
+    width: 25px; height: 25px; border: 2.5px solid var(--gray-300);
+    border-radius: 7px; background: #fff; cursor: pointer;
+    flex-shrink: 0; margin-top: 1px; position: relative; transition: all .18s;
+  }
+  .step-check:checked { background: var(--green); border-color: var(--green); }
+  .step-check:checked::after {
+    content: ""; position: absolute;
+    top: 4px; left: 7px; width: 7px; height: 11px;
+    border: 2.5px solid #fff; border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .step-content { flex: 1; }
+  .step-role {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    padding: 2px 8px; border-radius: 5px; margin-bottom: 5px;
+  }
+  .role-pc { background: #dbeafe; color: #1e40af; }
+  .role-ph { background: #d1fae5; color: #065f46; }
+  .role-both { background: #ede9fe; color: #5b21b6; }
+  .step-text { font-size: 15px; color: var(--gray-700); line-height: 1.55; }
+  .step-text strong { color: var(--gray-900); }
+  .step-note { margin-top: 6px; font-size: 13px; color: var(--gray-500); font-style: italic; }
+  .step-expect {
+    margin-top: 7px; padding: 7px 11px;
+    background: #fff; border-left: 3px solid var(--green);
+    border-radius: 0 6px 6px 0; font-size: 14px; color: var(--green); font-weight: 600;
+  }
+  .step-warn {
+    margin-top: 7px; padding: 7px 11px;
+    background: var(--amber-light); border-left: 3px solid var(--amber);
+    border-radius: 0 6px 6px 0; font-size: 14px; color: var(--amber); font-weight: 600;
+  }
+
+  /* INFO BOXES */
+  .info-box {
+    padding: 13px 15px; border-radius: 10px;
+    margin: 13px 0; font-size: 15px; line-height: 1.55;
+  }
+  .info-box.tip { background: var(--blue-light); color: #1e3a8a; border-left: 4px solid var(--blue); }
+  .info-box.warning { background: var(--amber-light); color: #92400e; border-left: 4px solid var(--amber); }
+  .info-box.success { background: var(--green-light); color: #14532d; border-left: 4px solid var(--green); }
+  .info-box.purple { background: var(--purple-light); color: #4c1d95; border-left: 4px solid var(--purple); }
+  .info-box-icon { font-size: 17px; margin-right: 5px; }
+
+  /* CREDENTIALS */
+  .creds-box {
+    background: #1c1c1e; color: #f5f5f5;
+    border-radius: 12px; padding: 18px; margin: 14px 0;
+  }
+  .creds-box-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    color: #888; margin-bottom: 11px;
+  }
+  .cred-row { margin-bottom: 11px; }
+  .cred-row:last-child { margin-bottom: 0; }
+  .cred-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+  .cred-value {
+    font-size: 15px; color: #fff;
+    background: #2c2c2e; padding: 6px 10px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    word-break: break-all;
+  }
+  .cred-copy {
+    font-size: 12px; color: #ef4444; cursor: pointer;
+    background: none; border: none; font-family: -apple-system, sans-serif;
+    padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+    transition: background .15s; -webkit-tap-highlight-color: transparent;
+  }
+  .cred-copy:active { background: #333; }
+  .cred-divider { border: none; border-top: 1px solid #333; margin: 13px 0; }
+
+  /* DEVICE SPLIT */
+  .device-split { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin: 14px 0; }
+  @media (max-width: 400px) { .device-split { grid-template-columns: 1fr; } }
+  .device-card { border-radius: 10px; padding: 15px; text-align: center; }
+  .device-card.computer { background: #dbeafe; }
+  .device-card.phone { background: #d1fae5; }
+  .device-emoji { font-size: 34px; display: block; margin-bottom: 7px; }
+  .device-label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+  .device-card.computer .device-label { color: #1e40af; }
+  .device-card.phone .device-label { color: #065f46; }
+  .device-role { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+  .device-account { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+
+  /* CAMPAIGN BADGE */
+  .campaign-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+  .campaign-item {
+    background: var(--gray-50); border-radius: 10px;
+    padding: 12px 14px; border: 1.5px solid var(--gray-200);
+  }
+  .campaign-name { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 3px; }
+  .campaign-desc { font-size: 13px; color: var(--gray-500); }
+  .campaign-tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; margin-top: 5px;
+  }
+  .tag-visit { background: #dbeafe; color: #1e40af; }
+  .tag-points { background: #ede9fe; color: #5b21b6; }
+  .tag-linked { background: #d1fae5; color: #065f46; }
+
+  /* PHONE MOCKUP */
+  .phone-mockup {
+    width: 170px; height: 320px; background: #1c1c1e;
+    border-radius: 28px; border: 7px solid #333; margin: 0 auto;
+    position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,.3);
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 54px; height: 14px; background: #1c1c1e;
+    border-radius: 0 0 10px 10px; z-index: 2;
+  }
+  .phone-screen {
+    background: linear-gradient(160deg, #1a1a1a 0%, #2d2d2d 100%);
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 14px; gap: 7px; color: #fff; text-align: center;
+  }
+  .phone-screen .ph-icon { font-size: 30px; margin-bottom: 3px; }
+  .phone-screen .ph-title { font-size: 13px; font-weight: 700; }
+  .phone-screen .ph-sub { font-size: 11px; color: #888; }
+  .phone-slot {
+    width: 100%; background: #2c2c2e; border-radius: 7px;
+    padding: 7px 9px; font-size: 11px; color: #aaa; text-align: center;
+    border: 1px dashed #444;
+  }
+
+  /* SCREENSHOT PLACEHOLDER */
+  .screenshot-placeholder {
+    border-radius: 10px; background: var(--gray-100);
+    border: 1.5px dashed var(--gray-300);
+    padding: 22px 16px; text-align: center; margin: 14px 0;
+    color: var(--gray-500);
+  }
+  .screenshot-placeholder .sp-icon { font-size: 30px; margin-bottom: 7px; display: block; }
+  .screenshot-placeholder .sp-label { font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 3px; }
+  .screenshot-placeholder .sp-sub { font-size: 12px; }
+
+  /* FEEDBACK */
+  .feedback-fields { display: flex; flex-direction: column; gap: 13px; margin-top: 14px; }
+  .field-label { font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; display: block; }
+  .field-input, .field-textarea {
+    width: 100%; padding: 11px 13px; border: 2px solid var(--gray-200);
+    border-radius: 8px; font-size: 15px; font-family: inherit;
+    color: var(--gray-900); background: #fff; transition: border-color .18s;
+  }
+  .field-input:focus, .field-textarea:focus { outline: none; border-color: var(--red); }
+  .field-textarea { resize: vertical; min-height: 85px; }
+  .feedback-btn {
+    background: var(--red); color: #fff; border: none; border-radius: 10px;
+    padding: 14px 22px; font-size: 16px; font-weight: 700; cursor: pointer;
+    width: 100%; margin-top: 7px; font-family: inherit;
+    transition: background .18s; -webkit-tap-highlight-color: transparent;
+  }
+  .feedback-btn:active { background: #991b1b; }
+  .feedback-result {
+    display: none; margin-top: 11px; padding: 13px;
+    background: var(--green-light); border-radius: 8px;
+    text-align: center; color: var(--green); font-weight: 600; font-size: 15px;
+  }
+
+  /* CONTACT BOX */
+  .contact-box {
+    background: #1c1c1e; color: #f5f5f5;
+    border-radius: 12px; padding: 18px; margin-top: 16px;
+  }
+  .contact-box-title { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 11px; font-weight: 700; }
+  .contact-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .contact-row:last-child { margin-bottom: 0; }
+  .contact-icon { font-size: 18px; flex-shrink: 0; }
+  .contact-text { font-size: 15px; color: #fff; }
+  .contact-text a { color: #ef4444; text-decoration: none; }
+
+  /* IMPRESSIONS LIST */
+  ul.assess-list { margin: 10px 0 0 18px; display: flex; flex-direction: column; gap: 7px; }
+  ul.assess-list li { font-size: 15px; color: var(--gray-700); }
+
+  /* RESET */
+  .reset-btn {
+    display: block; margin: 0 auto 10px; background: none;
+    border: 1.5px solid var(--gray-300); color: var(--gray-500);
+    padding: 8px 18px; border-radius: 8px; font-size: 13px;
+    cursor: pointer; font-family: inherit; transition: all .18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* UTILS */
+  .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 16px; } .mb-4 { margin-bottom: 16px; }
+  code.inline {
+    background: var(--gray-100); padding: 2px 6px; border-radius: 4px;
+    font-family: ui-monospace, monospace; font-size: 14px; color: var(--gray-900);
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 22px; }
+    .card-title { font-size: 16px; }
+    .container { padding: 15px 11px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-logo">✂ <span>Brzytwa</span></div>
+  <div class="progress-wrap">
+    <div class="progress-label" id="progressLabel">0 / 0 kroków</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Przewodnik testera · 2026</div>
+  <h1>Testujemy apkę<br>Brzytwa 💈</h1>
+  <p>Krok po kroku przez całą apkę — loginy gotowe, wystarczy jechać. Cały test zajmuje ok. 45–60 minut.</p>
+</div>
+
+<!-- COMPLETION -->
+<div class="completion-banner" id="completionBanner">
+  <span class="cb-icon">🎉</span>
+  <h2>Brawo — wszystkie kroki gotowe!</h2>
+  <p>Dziękujemy za test. Wyślij swoje uwagi do Mateusza — każda obserwacja jest bezcenna.</p>
+</div>
+
+<!-- INTRO: JAK TO DZIAŁA -->
+<div class="section-divider">Zanim zaczniesz</div>
+
+<div class="card open" id="card-intro">
+  <div class="card-header" onclick="toggleCard('card-intro')">
+    <div class="card-icon icon-gray">💡</div>
+    <div class="card-heading">
+      <div class="card-scenario">Wstęp</div>
+      <div class="card-title">Dwa ekrany, jedna osoba</div>
+      <div class="card-subtitle">Grasz rolę fryzjera i klienta jednocześnie</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <p style="color:var(--gray-700); margin-bottom:13px;">
+      Testując <strong>Brzytwa</strong> wcielasz się jednocześnie w dwie osoby:
+      <strong>fryzjera-właściciela</strong> (panel na komputerze) i <strong>klienta</strong> (apka na iPhonie).
+      To <em>gotowe konta testowe</em> — nie Twoje prywatne.
+    </p>
+
+    <div class="device-split">
+      <div class="device-card computer">
+        <span class="device-emoji">💻</span>
+        <div class="device-label">Komputer</div>
+        <div class="device-role">Fryzjer / właściciel</div>
+        <div class="device-account">panel webowy</div>
+      </div>
+      <div class="device-card phone">
+        <span class="device-emoji">📱</span>
+        <div class="device-label">iPhone</div>
+        <div class="device-role">Klient (stały bywalec)</div>
+        <div class="device-account">apka Brzytwa</div>
+      </div>
+    </div>
+
+    <div class="info-box tip mt-3">
+      <span class="info-box-icon">📷</span>
+      <strong>Jak skanować kody QR między ekranami:</strong><br>
+      • <strong>Pieczątka (EARN):</strong> kod QR pojawia się na ekranie komputera → zbliż iPhone i zeskanuj aparatem.<br>
+      • <strong>Nagroda (REDEEM):</strong> kod QR pojawia się na iPhonie → przytrzymaj telefon ~20 cm przed kamerką laptopa.
+    </div>
+
+    <div class="info-box warning mt-3">
+      <span class="info-box-icon">⏱</span>
+      <strong>Kody mają krótki czas ważności!</strong><br>
+      Kod pieczątki ważny ~<strong>2 minuty</strong> i jest <strong>jednorazowy</strong> (drugi skan = odrzucenie).<br>
+      Kod nagrody ważny ~<strong>5 minut</strong>. Generuj dopiero gdy jesteś gotowa do skanu.
+    </div>
+  </div>
+</div>
+
+<!-- KAMPANIE W MIKOŁOWIE -->
+<div class="card" id="card-campaigns-info">
+  <div class="card-header" onclick="toggleCard('card-campaigns-info')">
+    <div class="card-icon icon-purple">🎯</div>
+    <div class="card-heading">
+      <div class="card-scenario">Kontekst</div>
+      <div class="card-title">Kampanie w salonie (gotowe)</div>
+      <div class="card-subtitle">Brzytwa Mikołów — 3 kampanie do testów</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <p style="color:var(--gray-700); margin-bottom:12px; font-size:15px;">
+      Salon <strong>Brzytwa Mikołów</strong> ma już zaseedowane dane (~50 klientów, historia wizyt, segmenty).
+      Poniżej trzy kampanie, które będziesz testować:
+    </p>
+    <div class="campaign-list">
+      <div class="campaign-item">
+        <div class="campaign-name">🏃 „Nagroda ekspres"</div>
+        <div class="campaign-desc">Cel: <strong>1 wizyta</strong> → nagroda <strong>„Uścisk dłoni barbera 🤝"</strong></div>
+        <div class="campaign-desc" style="margin-top:3px;">Używana do pełnego szybkiego cyklu (Scenariusz 2).</div>
+        <span class="campaign-tag tag-visit">wizytowa</span>
+        <span class="campaign-tag tag-linked" style="margin-left:4px;">🔗 łączona z Chorzowem</span>
+      </div>
+      <div class="campaign-item">
+        <div class="campaign-name">⭐ „Stały klient"</div>
+        <div class="campaign-desc">Cel: <strong>10 wizyt</strong> → <strong>50% zniżki na kolejną wizytę</strong></div>
+        <span class="campaign-tag tag-visit">wizytowa</span>
+      </div>
+      <div class="campaign-item">
+        <div class="campaign-name">🍺 „Punkty za strzyżenie"</div>
+        <div class="campaign-desc">Cel: <strong>15 punktów</strong> → <strong>6 butelek piwa kraftowego 0%</strong></div>
+        <div class="campaign-desc" style="margin-top:3px;">Typy: Strzyżenie = 1 pkt, Combo = 2 pkt, Super-combo = 3 pkt</div>
+        <span class="campaign-tag tag-points">punktowa</span>
+      </div>
+    </div>
+    <div class="info-box purple mt-3">
+      <span class="info-box-icon">🔗</span>
+      <strong>Kampania łączona</strong> — nowość! „Nagroda ekspres" w Mikołowie jest połączona z „Nagroda ekspres (Chorzów)".
+      Jeden skan w Mikołowie nabija kartę <em>w obu salonach jednocześnie</em>. Testujesz to w Scenariuszu 3.
+    </div>
+  </div>
+</div>
+
+<!-- DOSTĘPY -->
+<div class="section-divider">Twoje konta testowe</div>
+
+<div class="card" id="card-creds">
+  <div class="card-header" onclick="toggleCard('card-creds')">
+    <div class="card-icon icon-red">🔑</div>
+    <div class="card-heading">
+      <div class="card-scenario">Dostępy</div>
+      <div class="card-title">Loginy i hasła</div>
+      <div class="card-subtitle">Wszystko tu — nie musisz nigdzie szukać</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="creds-box">
+      <div class="creds-box-title">💻 Panel fryzjera — komputer (główne testy)</div>
+      <div class="cred-row">
+        <div class="cred-label">Adres strony</div>
+        <div class="cred-value">
+          <span>brzytwa.zapart.eu</span>
+          <button class="cred-copy" onclick="copyText('https://brzytwa.zapart.eu',this)">kopiuj</button>
+        </div>
+      </div>
+      <div class="cred-row">
+        <div class="cred-label">Właściciel — e-mail</div>
+        <div class="cred-value">
+          <span>brzytwa_test_owner@zapart.eu</span>
+          <button class="cred-copy" onclick="copyText('brzytwa_test_owner@zapart.eu',this)">kopiuj</button>
+        </div>
+      </div>
+      <div class="cred-row">
+        <div class="cred-label">Właściciel — hasło</div>
+        <div class="cred-value">
+          <span>cokolwiek</span>
+          <button class="cred-copy" onclick="copyText('cokolwiek',this)">kopiuj</button>
+        </div>
+      </div>
+
+      <hr class="cred-divider">
+      <div class="creds-box-title">📱 Apka iPhone — KONTO KLIENTA (główne testy)</div>
+      <div class="cred-row">
+        <div class="cred-label">E-mail</div>
+        <div class="cred-value">
+          <span>brzytwa_test_klient@zapart.eu</span>
+          <button class="cred-copy" onclick="copyText('brzytwa_test_klient@zapart.eu',this)">kopiuj</button>
+        </div>
+      </div>
+      <div class="cred-row">
+        <div class="cred-label">Hasło</div>
+        <div class="cred-value">
+          <span>cokolwiek</span>
+          <button class="cred-copy" onclick="copyText('cokolwiek',this)">kopiuj</button>
+        </div>
+      </div>
+
+      <hr class="cred-divider">
+      <div class="creds-box-title">📱 Apka iPhone — FRYZJER (tylko Scenariusz 7)</div>
+      <div class="cred-row">
+        <div class="cred-label">E-mail (właściciel)</div>
+        <div class="cred-value">
+          <span>brzytwa_test_owner@zapart.eu</span>
+          <button class="cred-copy" onclick="copyText('brzytwa_test_owner@zapart.eu',this)">kopiuj</button>
+        </div>
+      </div>
+      <div class="cred-row">
+        <div class="cred-label">lub pracownik</div>
+        <div class="cred-value">
+          <span>brzytwa_sm_kama@zapart.eu</span>
+          <button class="cred-copy" onclick="copyText('brzytwa_sm_kama@zapart.eu',this)">kopiuj</button>
+        </div>
+      </div>
+      <div class="cred-row">
+        <div class="cred-label">Hasło (obu)</div>
+        <div class="cred-value">
+          <span>cokolwiek</span>
+          <button class="cred-copy" onclick="copyText('cokolwiek',this)">kopiuj</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      <span class="info-box-icon">✅</span>
+      Wszystkie konta mają to samo hasło: <strong>cokolwiek</strong>.
+      Po pierwszym logowaniu w apce <strong>zezwól na powiadomienia</strong>.
+    </div>
+  </div>
+</div>
+
+<!-- TESTFLIGHT -->
+<div class="card" id="card-tf">
+  <div class="card-header" onclick="toggleCard('card-tf')">
+    <div class="card-icon icon-blue">🛩</div>
+    <div class="card-heading">
+      <div class="card-scenario">Krok 0 — jednorazowe</div>
+      <div class="card-title">Zainstaluj apkę (TestFlight)</div>
+      <div class="card-subtitle">Raz i gotowe — TestFlight to oficjalna apka Apple do testów beta</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip">
+      <span class="info-box-icon">ℹ️</span>
+      <strong>Czym jest TestFlight?</strong> To darmowa apka Apple, która pozwala testować programy zanim trafią do App Store.
+      Wystarczy zaakceptować zaproszenie — używasz swojego zwykłego Apple ID.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_tf_1">
+        <input type="checkbox" class="step-check" data-step="step_tf_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Otwórz <strong>App Store</strong> → wyszukaj <strong>„TestFlight"</strong> → zainstaluj (bezpłatna, od Apple).</div>
+          <div class="step-note">Jeśli już masz TestFlight — pomiń ten krok.</div>
+        </div>
+      </label>
+      <label class="step" id="step_tf_2">
+        <input type="checkbox" class="step-check" data-step="step_tf_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Otwórz <strong>zaproszenie od Mateusza</strong> (mail lub link) → zostaniesz przeniesiona do TestFlight.</div>
+        </div>
+      </label>
+      <label class="step" id="step_tf_3">
+        <input type="checkbox" class="step-check" data-step="step_tf_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">W TestFlight znajdź <strong>„Brzytwa"</strong> → kliknij <strong>„Install"</strong>.</div>
+          <div class="step-expect">✓ Apka „Brzytwa" pojawia się na ekranie głównym iPhone'a.</div>
+        </div>
+      </label>
+    </div>
+    <div style="margin: 18px auto 0; max-width: 190px;">
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="ph-icon">✈️</div>
+          <div class="ph-title">TestFlight</div>
+          <div class="ph-sub" style="margin-bottom:10px;">zaproszenie od Mateusza</div>
+          <div class="phone-slot">🪒 Brzytwa<br><small>Install →</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENARIUSZE -->
+<div class="section-divider">Scenariusze testowe</div>
+
+<!-- S1 -->
+<div class="card" id="card-s1">
+  <div class="card-header" onclick="toggleCard('card-s1')">
+    <div class="card-icon icon-amber">🔓</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 1</div>
+      <div class="card-title">Pierwsze logowanie</div>
+      <div class="card-subtitle">Uruchamiamy oba ekrany i sprawdzamy dostępy</div>
+      <div class="card-chip chip-todo" id="chip_s1">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="steps">
+      <label class="step" id="step_s1_1">
+        <input type="checkbox" class="step-check" data-step="step_s1_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer</div>
+          <div class="step-text">
+            Otwórz przeglądarkę i wejdź na <strong>brzytwa.zapart.eu</strong>.<br>
+            Zaloguj się: email <code class="inline">brzytwa_test_owner@zapart.eu</code> · hasło <code class="inline">cokolwiek</code>
+          </div>
+          <div class="step-expect">✓ Widzisz panel właściciela z menu: Generuj, Skanuj, Kampanie itp.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s1_2">
+        <input type="checkbox" class="step-check" data-step="step_s1_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">
+            Otwórz apkę <strong>Brzytwa</strong>. Zaloguj się kontem klienta:<br>
+            email <code class="inline">brzytwa_test_klient@zapart.eu</code> · hasło <code class="inline">cokolwiek</code>
+          </div>
+        </div>
+      </label>
+      <label class="step" id="step_s1_3">
+        <input type="checkbox" class="step-check" data-step="step_s1_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Gdy apka zapyta o powiadomienia — kliknij <strong>„Zezwól"</strong>.</div>
+          <div class="step-expect">✓ Widzisz karty lojalnościowe klienta. Klient testowy ma już historię — kilka kart w toku.</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S2 -->
+<div class="card" id="card-s2">
+  <div class="card-header" onclick="toggleCard('card-s2')">
+    <div class="card-icon icon-green">🏆</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 2 — serce produktu</div>
+      <div class="card-title">Pełny cykl: pieczątka → nagroda</div>
+      <div class="card-subtitle">„Nagroda ekspres": 1 wizyta = karta pełna = „Uścisk dłoni barbera 🤝"</div>
+      <div class="card-chip chip-todo" id="chip_s2">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip">
+      <span class="info-box-icon">🎯</span>
+      To najważniejszy scenariusz — cały obieg od pieczątki do odbioru nagrody.
+      Kampania „Nagroda ekspres" ma cel 1, więc jeden skan = od razu pełna karta i nagroda.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s2_1">
+        <input type="checkbox" class="step-check" data-step="step_s2_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — generuj kod</div>
+          <div class="step-text">W panelu kliknij <strong>„Generuj"</strong> → wybierz kampanię <strong>„Nagroda ekspres"</strong> → typ wizyty: <strong>„Wizyta"</strong> → pojawia się kod QR.</div>
+          <div class="step-warn">⏱ Kod ważny tylko ~2 minuty — od razu skanuj!</div>
+        </div>
+      </label>
+      <label class="step" id="step_s2_2">
+        <input type="checkbox" class="step-check" data-step="step_s2_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — skanuj</div>
+          <div class="step-text">W apce otwórz <strong>skaner pieczątki</strong> → skieruj aparat iPhone'a na kod QR widoczny na ekranie komputera.</div>
+          <div class="step-expect">✓ Karta 1/1 — PEŁNA 🎉 Pojawia się nagroda „Uścisk dłoni barbera 🤝".</div>
+        </div>
+      </label>
+      <label class="step" id="step_s2_3">
+        <input type="checkbox" class="step-check" data-step="step_s2_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — test jednorazowości</div>
+          <div class="step-text"><strong>Zeskanuj ten sam kod QR jeszcze raz</strong> (nadal widoczny na komputerze).</div>
+          <div class="step-expect">✓ Apka powinna ODRZUCIĆ (komunikat „kod już użyty" lub podobny).</div>
+          <div class="step-note">Zanotuj dokładną treść komunikatu — przyda się w feedbacku.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s2_4">
+        <input type="checkbox" class="step-check" data-step="step_s2_4" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — pokaż kod nagrody</div>
+          <div class="step-text">Otwórz nagrodę „Uścisk dłoni barbera 🤝" → kliknij, żeby pokazać <strong>kod QR nagrody (REDEEM-QR)</strong>.</div>
+          <div class="step-warn">⏱ Kod nagrody ważny ~5 minut — od razu skanuj na komputerze!</div>
+        </div>
+      </label>
+      <label class="step" id="step_s2_5">
+        <input type="checkbox" class="step-check" data-step="step_s2_5" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — skanuj nagrodę</div>
+          <div class="step-text">W panelu wejdź w <strong>„Skanuj"</strong> → uruchom skaner → <strong>przytrzymaj iPhone ok. 20 cm przed kamerką laptopa</strong> → zeskanuj kod nagrody z telefonu.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s2_6">
+        <input type="checkbox" class="step-check" data-step="step_s2_6" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — potwierdź odbiór</div>
+          <div class="step-text">W apce pojawi się prośba o <strong>potwierdzenie odbioru</strong> → kliknij „Potwierdź".</div>
+          <div class="step-expect">✓ Nagroda zrealizowana, karta domknięta. Udało się!</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S3 -->
+<div class="card" id="card-s3">
+  <div class="card-header" onclick="toggleCard('card-s3')">
+    <div class="card-icon icon-purple">🔗</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 3 — nowość</div>
+      <div class="card-title">Kampania łączona: jeden skan, dwie karty</div>
+      <div class="card-subtitle">Skan w Mikołowie nabija też kartę w Chorzowie</div>
+      <div class="card-chip chip-todo" id="chip_s3">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box purple">
+      <span class="info-box-icon">🔗</span>
+      <strong>Czym jest kampania łączona?</strong><br>
+      Firma ma dwa salony: Mikołów i Chorzów. Kampanie „Nagroda ekspres" w obu są połączone —
+      klient zbiera w jednej sieci, może skonsumować nagrodę w dowolnym salonie.
+      Jeden skan pieczątki nabija obie karty naraz.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s3_1">
+        <input type="checkbox" class="step-check" data-step="step_s3_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer</div>
+          <div class="step-text">„Generuj" → kampania <strong>„Nagroda ekspres"</strong> → typ <strong>„Wizyta"</strong> → kod QR.</div>
+          <div class="step-warn">⏱ Skanuj od razu!</div>
+        </div>
+      </label>
+      <label class="step" id="step_s3_2">
+        <input type="checkbox" class="step-check" data-step="step_s3_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — skanuj i sprawdź</div>
+          <div class="step-text">Zeskanuj kod → po skanie przejdź do <strong>listy swoich kart</strong>.</div>
+          <div class="step-expect">✓ Obok karty „Nagroda ekspres" (Mikołów) pojawia się <em>też</em> postęp w „Nagroda ekspres (Chorzów)" — jeden skan nabił obie!</div>
+        </div>
+      </label>
+      <label class="step" id="step_s3_3">
+        <input type="checkbox" class="step-check" data-step="step_s3_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Wejdź w kartę „Nagroda ekspres (Chorzów)" — sprawdź, czy dane się zgadzają (liczba pieczątek, kampania).</div>
+          <div class="step-note">Zanotuj, czy wyświetlanie jest zrozumiałe — czy widać jasno, że to inny salon.</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S4 -->
+<div class="card" id="card-s4">
+  <div class="card-header" onclick="toggleCard('card-s4')">
+    <div class="card-icon icon-purple">🍺</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 4</div>
+      <div class="card-title">Kampania punktowa</div>
+      <div class="card-subtitle">„Punkty za strzyżenie": różne usługi = różna liczba punktów</div>
+      <div class="card-chip chip-todo" id="chip_s4">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip">
+      <span class="info-box-icon">💡</span>
+      W kampanii punktowej każda usługa ma inną wagę punktową. Testujesz, czy punkty rosną prawidłowo.
+      Cel kampanii to 15 punktów → 6 butelek piwa kraftowego 0%.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s4_1">
+        <input type="checkbox" class="step-check" data-step="step_s4_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — generuj trzy kody</div>
+          <div class="step-text">
+            „Generuj" → kampania <strong>„Punkty za strzyżenie"</strong> → wygeneruj trzy osobne kody, po jednym dla każdego typu:<br>
+            • <strong>„Strzyżenie"</strong> (1 pkt)<br>
+            • <strong>„Combo"</strong> (2 pkt)<br>
+            • <strong>„Super-combo"</strong> (3 pkt)
+          </div>
+          <div class="step-note">Każdy kod skanuj osobno — kod jest jednorazowy i ważny ~2 min.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s4_2">
+        <input type="checkbox" class="step-check" data-step="step_s4_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — skanuj każdy</div>
+          <div class="step-text">Po każdym skanie sprawdź, o ile wzrosła liczba <strong>punktów na karcie</strong>.</div>
+          <div class="step-expect">✓ Po wszystkich trzech: +6 punktów (1+2+3). Karta rośnie stopniowo w kierunku celu 15 pkt.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s4_3">
+        <input type="checkbox" class="step-check" data-step="step_s4_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — oceń czytelność</div>
+          <div class="step-text">Czy widać wyraźnie <strong>ile punktów</strong> ma karta i <strong>ile brakuje do nagrody</strong>? Czy rozumiesz, za co były przyznane punkty?</div>
+          <div class="step-note">Zanotuj wrażenia — przydadzą się w feedbacku.</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S5 -->
+<div class="card" id="card-s5">
+  <div class="card-header" onclick="toggleCard('card-s5')">
+    <div class="card-icon icon-amber">✨</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 5</div>
+      <div class="card-title">Zakładanie kampanii od zera</div>
+      <div class="card-subtitle">Kreator kampanii — czy jest intuicyjny?</div>
+      <div class="card-chip chip-todo" id="chip_s5">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip">
+      <span class="info-box-icon">🏗</span>
+      Wyobraź sobie, że jesteś właścicielką salonu i chcesz uruchomić nowy program lojalnościowy.
+      Sprawdź, czy kreator jest zrozumiały — czy wiesz co wpisać w każdym kroku.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s5_1">
+        <input type="checkbox" class="step-check" data-step="step_s5_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer</div>
+          <div class="step-text">W panelu wejdź w <strong>„Kampanie"</strong> → kliknij <strong>„Nowa kampania"</strong>.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s5_2">
+        <input type="checkbox" class="step-check" data-step="step_s5_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — wypełnij kreator</div>
+          <div class="step-text">
+            Wypełnij formularz nowej kampanii:<br>
+            • <strong>Nazwa</strong> (np. „Letnia promocja")<br>
+            • <strong>Tryb:</strong> wizytowy lub punktowy<br>
+            • <strong>Cel</strong> (liczba wizyt/punktów)<br>
+            • <strong>Nagroda</strong> (opis nagrody)<br>
+            • <strong>Typy wizyt</strong> (jeśli punktowy)<br>
+            Następnie kliknij <strong>„Opublikuj"</strong>.
+          </div>
+          <div class="step-note">Uwaga: limit to 3 aktywne kampanie na salon. Jeśli limit osiągnięty, kreator zaproponuje zapisanie jako szkic — opisz, czy to jest zrozumiałe.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s5_3">
+        <input type="checkbox" class="step-check" data-step="step_s5_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — weryfikacja</div>
+          <div class="step-text">Po opublikowaniu wróć do listy kampanii — sprawdź, czy nowa pojawia się jako <strong>aktywna</strong>.</div>
+          <div class="step-expect">✓ Kampania widoczna na liście ze statusem „aktywna". Możesz dla niej wygenerować kod w „Generuj".</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S6 -->
+<div class="card" id="card-s6">
+  <div class="card-header" onclick="toggleCard('card-s6')">
+    <div class="card-icon icon-blue">👀</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 6</div>
+      <div class="card-title">Przegląd panelu</div>
+      <div class="card-subtitle">Dashboard, klienci, segmenty, wizyty, nagrody, zespół — tylko oglądasz</div>
+      <div class="card-chip chip-todo" id="chip_s6">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip">
+      <span class="info-box-icon">👁</span>
+      Ten scenariusz jest o <strong>wrażeniach</strong>: czy panel jest czytelny i intuicyjny.
+      Nie tworzysz danych — tylko klikasz i obserwujesz. Środowisko jest celowo „niezdrowe" — dużo nieaktywnych klientów.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s6_1">
+        <input type="checkbox" class="step-check" data-step="step_s6_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Dashboard / „Zdrowie barbera"</div>
+          <div class="step-text">Wejdź na stronę główną panelu (Dashboard lub „Zdrowie barbera"). Sprawdź wykresy i liczby aktywności.</div>
+          <div class="step-note">Salon jest celowo „niezdrowy" — dużo nieaktywnych klientów. Czy panel to jasno sygnalizuje?</div>
+        </div>
+      </label>
+      <label class="step" id="step_s6_2">
+        <input type="checkbox" class="step-check" data-step="step_s6_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Klienci i segmenty</div>
+          <div class="step-text">Wejdź w <strong>„Klienci"</strong> → kliknij filtry segmentów: <strong>VIP, regularni, zagrożeni, uśpieni</strong>.</div>
+          <div class="step-note">Czy rozumiesz, co oznaczają segmenty? Czy wiesz, jak je odczytać? Fryzjer widzi tylko anonimowy ID klienta (np. <code class="inline">user_abc123</code>) — czy to jest czytelne?</div>
+        </div>
+      </label>
+      <label class="step" id="step_s6_3">
+        <input type="checkbox" class="step-check" data-step="step_s6_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Wizyty i nagrody</div>
+          <div class="step-text">Przejdź do <strong>„Wizyty"</strong> — lista wszystkich wizyt. Następnie <strong>„Nagrody"</strong> — zrealizowane i oczekujące.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s6_4">
+        <input type="checkbox" class="step-check" data-step="step_s6_4" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Zespół</div>
+          <div class="step-text">Wejdź w <strong>„Zespół"</strong> — lista pracowników (Kama, Kuba, Anna-analityk). Czy widać ich role i przypisanie do salonu?</div>
+          <div class="step-note">Opcjonalnie: kliknij „Dodaj pracownika" i przejrzyj formularz (nie musisz dodawać).</div>
+        </div>
+      </label>
+      <label class="step" id="step_s6_5">
+        <input type="checkbox" class="step-check" data-step="step_s6_5" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Ustawienia</div>
+          <div class="step-text">Przejrzyj <strong>Ustawienia</strong> — dane salonu, opcje konta właściciela.</div>
+        </div>
+      </label>
+    </div>
+    <div class="info-box success mt-3">
+      <span class="info-box-icon">📝</span>
+      <strong>Podczas przeglądania zanotuj:</strong> co jest niejasne, co zaskakuje, czego brakuje, co wygląda mylnie.
+      To złoto — sekcja feedbacku na dole czeka na Twoje uwagi.
+    </div>
+  </div>
+</div>
+
+<!-- S7 -->
+<div class="card" id="card-s7">
+  <div class="card-header" onclick="toggleCard('card-s7')">
+    <div class="card-icon icon-gray">💇</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 7</div>
+      <div class="card-title">Fryzjer na telefonie</div>
+      <div class="card-subtitle">Widok pracownika w apce — Dziś, Generuj, Skanuj</div>
+      <div class="card-chip chip-todo" id="chip_s7">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box warning">
+      <span class="info-box-icon">🔄</span>
+      W tym scenariuszu tymczasowo wylogujesz konto klienta i zalogujesz konto fryzjera na iPhone.
+      Na końcu możesz wrócić na konto klienta.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s7_1">
+        <input type="checkbox" class="step-check" data-step="step_s7_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">W apce <strong>wyloguj się</strong> z konta klienta (Ustawienia → Wyloguj lub podobne).</div>
+        </div>
+      </label>
+      <label class="step" id="step_s7_2">
+        <input type="checkbox" class="step-check" data-step="step_s7_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">
+            Zaloguj się kontem <strong>właściciela</strong> (lub pracownika Kamy):<br>
+            email <code class="inline">brzytwa_test_owner@zapart.eu</code> · hasło <code class="inline">cokolwiek</code>
+          </div>
+          <div class="step-expect">✓ Widzisz widok fryzjera: zakładki Dziś, Generuj, Skanuj.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s7_3">
+        <input type="checkbox" class="step-check" data-step="step_s7_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Wejdź w <strong>„Generuj"</strong> → wygeneruj kod pieczątki (nie musisz skanować) → poklikaj różne opcje kampanii i typów wizyt.</div>
+          <div class="step-note">Czy generowanie z telefonu jest wygodne? Czy wszystko widać dobrze na małym ekranie?</div>
+        </div>
+      </label>
+      <label class="step" id="step_s7_4">
+        <input type="checkbox" class="step-check" data-step="step_s7_4" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone (opcjonalnie)</div>
+          <div class="step-text">Wróć na konto klienta: wyloguj i zaloguj emailem <code class="inline">brzytwa_test_klient@zapart.eu</code> · hasło <code class="inline">cokolwiek</code>.</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- S8 -->
+<div class="card" id="card-s8">
+  <div class="card-header" onclick="toggleCard('card-s8')">
+    <div class="card-icon icon-red">↩️</div>
+    <div class="card-heading">
+      <div class="card-scenario">Scenariusz 8</div>
+      <div class="card-title">Cofnięcie pieczątki</div>
+      <div class="card-subtitle">Co się dzieje z nagrodą, gdy fryzjer anuluje wizytę?</div>
+      <div class="card-chip chip-todo" id="chip_s8">do zrobienia</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box warning">
+      <span class="info-box-icon">📌</span>
+      Testujesz edge-case: co się stanie, jeśli fryzjer cofnie wizytę, zanim klient odbierze nagrodę?
+      <strong>NIE pokazuj kodu nagrody</strong> w kroku 2 — nagroda ma czekać nieodebrana.
+    </div>
+    <div class="steps mt-3">
+      <label class="step" id="step_s8_1">
+        <input type="checkbox" class="step-check" data-step="step_s8_1" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer</div>
+          <div class="step-text">„Generuj" → kampania <strong>„Nagroda ekspres"</strong> → „Wizyta" → kod QR.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s8_2">
+        <input type="checkbox" class="step-check" data-step="step_s8_2" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone</div>
+          <div class="step-text">Zeskanuj kod → karta pełna, nagroda do odebrania. <strong>STOP — nie klikaj nagrody.</strong> Zostaw tak.</div>
+        </div>
+      </label>
+      <label class="step" id="step_s8_3">
+        <input type="checkbox" class="step-check" data-step="step_s8_3" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-pc">💻 Komputer — cofnij wizytę</div>
+          <div class="step-text">W panelu wejdź w <strong>„Wizyty"</strong> → znajdź właśnie dodaną wizytę (na górze listy) → kliknij <strong>„Cofnij"</strong> (lub „Anuluj").</div>
+        </div>
+      </label>
+      <label class="step" id="step_s8_4">
+        <input type="checkbox" class="step-check" data-step="step_s8_4" onchange="onCheck(this)">
+        <div class="step-content">
+          <div class="step-role role-ph">📱 iPhone — co teraz?</div>
+          <div class="step-text">Teraz spróbuj odebrać nagrodę w apce. <strong>Zaobserwuj i opisz, co się dzieje</strong> — jaki komunikat, co się stało z kartą.</div>
+          <div class="step-note">Nie ma złej odpowiedzi. Chodzi o to, czy zachowanie jest zrozumiałe z perspektywy klienta.</div>
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- CO OCENIAMY -->
+<div class="section-divider">Wrażenia ogólne</div>
+
+<div class="card" id="card-impressions">
+  <div class="card-header" onclick="toggleCard('card-impressions')">
+    <div class="card-icon icon-blue">💬</div>
+    <div class="card-heading">
+      <div class="card-scenario">Po testach</div>
+      <div class="card-title">Co oceniamy?</div>
+      <div class="card-subtitle">Szczera opinia jest ważniejsza niż wyniki scenariuszy</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <p style="color:var(--gray-700); margin-bottom:13px; font-size:15px;">
+      Nie musisz znać się na aplikacjach — Twoja perspektywa osoby spoza IT jest najcenniejsza.
+    </p>
+    <ul class="assess-list">
+      <li>🤔 Czy coś było <strong>niejasne lub mylące</strong>?</li>
+      <li>😤 Czy coś <strong>frustrowało</strong> lub zajmowało za dużo czasu?</li>
+      <li>❓ Czy <strong>brakowało informacji</strong> w odpowiednim momencie?</li>
+      <li>🐛 Czy coś <strong>nie zadziałało</strong> tak jak powinno?</li>
+      <li>✨ Co było <strong>wyjątkowo proste lub przyjemne</strong>?</li>
+      <li>💡 Co byś <strong>zmieniła lub dodała</strong> w codziennej pracy w salonie?</li>
+    </ul>
+    <div class="info-box success mt-3">
+      <span class="info-box-icon">📸</span>
+      Zrzuty ekranu są bardzo pomocne — jeśli coś wygląda dziwnie lub się psuje,
+      zrób screenshot (boczny przycisk + góra głośności na iPhonie) i wyślij do Mateusza z opisem.
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK -->
+<div class="section-divider">Wyślij uwagi</div>
+
+<div class="card" id="card-feedback">
+  <div class="card-header" onclick="toggleCard('card-feedback')">
+    <div class="card-icon icon-red">📋</div>
+    <div class="card-heading">
+      <div class="card-scenario">Feedback</div>
+      <div class="card-title">Formularz zgłoszenia</div>
+      <div class="card-subtitle">Opisz co się stało — skopiuj i wyślij do Mateusza</div>
+    </div>
+    <div class="card-toggle">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="info-box tip" style="margin-bottom:14px;">
+      <span class="info-box-icon">ℹ️</span>
+      Kliknij <strong>„Przygotuj wiadomość"</strong> — treść trafi do schowka.
+      Wklej ją w SMS, WhatsApp lub email do Mateusza.
+    </div>
+    <div class="feedback-fields">
+      <div>
+        <label class="field-label" for="fb-scenario">Który scenariusz / co testowałaś</label>
+        <input type="text" class="field-input" id="fb-scenario" placeholder="np. Scenariusz 2 — pełny cykl">
+      </div>
+      <div>
+        <label class="field-label" for="fb-happened">Co się stało (opisz dokładnie)</label>
+        <textarea class="field-textarea" id="fb-happened" placeholder="np. Po skanie kodu pojawił się komunikat 'Błąd' i pieczątka nie wpadła."></textarea>
+      </div>
+      <div>
+        <label class="field-label" for="fb-expected">Czego się spodziewałaś</label>
+        <textarea class="field-textarea" id="fb-expected" placeholder="np. Powinna wpaść pieczątka na karcie."></textarea>
+      </div>
+      <div>
+        <label class="field-label" for="fb-screenshot">Masz zrzut ekranu?</label>
+        <input type="text" class="field-input" id="fb-screenshot" placeholder="tak / nie / (opis co widać na zrzucie)">
+      </div>
+      <div>
+        <label class="field-label" for="fb-device">Model telefonu i wersja iOS</label>
+        <input type="text" class="field-input" id="fb-device" placeholder="np. iPhone 14 Pro, iOS 17.5">
+      </div>
+      <div>
+        <label class="field-label" for="fb-general">Ogólne uwagi (co się podobało / nie podobało)</label>
+        <textarea class="field-textarea" id="fb-general" placeholder="Cokolwiek Ci na myśl przyjdzie — im szczerzej, tym lepiej!"></textarea>
+      </div>
+    </div>
+    <button class="feedback-btn" onclick="prepareFeedback()">📤 Przygotuj wiadomość (kopiuj do schowka)</button>
+    <div class="feedback-result" id="feedbackResult">✓ Skopiowano! Wklej wiadomość do Mateusza.</div>
+
+    <div class="contact-box">
+      <div class="contact-box-title">Kontakt do zgłoszeń</div>
+      <div class="contact-row">
+        <div class="contact-icon">👤</div>
+        <div class="contact-text"><strong>Mateusz Zapart</strong></div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-icon">✉️</div>
+        <div class="contact-text"><a href="mailto:mateusz@zapart.eu">mateusz@zapart.eu</a></div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-icon">📞</div>
+        <div class="contact-text" style="color:#888;">[numer telefonu — uzupełni Mateusz]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:26px; text-align:center;">
+  <button class="reset-btn" onclick="resetProgress()">Zresetuj postęp (zacznij od nowa)</button>
+</div>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+  var LS_KEY = 'brzytwa_tester_v2';
+
+  window.toggleCard = function(id){
+    document.getElementById(id).classList.toggle('open');
+  };
+
+  function loadState(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }catch(e){ return {}; } }
+  function saveState(s){ try{ localStorage.setItem(LS_KEY, JSON.stringify(s)); }catch(e){} }
+
+  function allCheckboxes(){ return Array.from(document.querySelectorAll('.step-check')); }
+
+  function applyState(){
+    var s = loadState();
+    allCheckboxes().forEach(function(cb){
+      if(s[cb.dataset.step]){ cb.checked=true; cb.closest('.step').classList.add('checked'); }
+    });
+    updateProgress(); updateChips();
+  }
+
+  window.onCheck = function(cb){
+    var s = loadState();
+    s[cb.dataset.step] = cb.checked;
+    saveState(s);
+    cb.closest('.step').classList.toggle('checked', cb.checked);
+    updateProgress(); updateChips();
+  };
+
+  function updateProgress(){
+    var all = allCheckboxes(), done = all.filter(function(c){ return c.checked; }).length;
+    var pct = all.length ? Math.round(done/all.length*100) : 0;
+    document.getElementById('progressBar').style.width = pct+'%';
+    document.getElementById('progressLabel').textContent = done+' / '+all.length+' kroków';
+    var b = document.getElementById('completionBanner');
+    b.classList.toggle('visible', done>0 && done===all.length);
+  }
+
+  var scenarioSteps = {
+    s1: ['step_s1_1','step_s1_2','step_s1_3'],
+    s2: ['step_s2_1','step_s2_2','step_s2_3','step_s2_4','step_s2_5','step_s2_6'],
+    s3: ['step_s3_1','step_s3_2','step_s3_3'],
+    s4: ['step_s4_1','step_s4_2','step_s4_3'],
+    s5: ['step_s5_1','step_s5_2','step_s5_3'],
+    s6: ['step_s6_1','step_s6_2','step_s6_3','step_s6_4','step_s6_5'],
+    s7: ['step_s7_1','step_s7_2','step_s7_3','step_s7_4'],
+    s8: ['step_s8_1','step_s8_2','step_s8_3','step_s8_4']
+  };
+
+  function updateChips(){
+    var s = loadState();
+    Object.keys(scenarioSteps).forEach(function(k){
+      var steps = scenarioSteps[k];
+      var done = steps.filter(function(id){ return s[id]; }).length;
+      var chip = document.getElementById('chip_'+k);
+      if(!chip) return;
+      if(done===0){ chip.textContent='do zrobienia'; chip.className='card-chip chip-todo'; }
+      else if(done<steps.length){ chip.textContent=done+'/'+steps.length+' kroków'; chip.className='card-chip chip-todo'; }
+      else{ chip.textContent='✓ gotowe'; chip.className='card-chip chip-done'; }
+    });
+  }
+
+  window.resetProgress = function(){
+    if(!confirm('Zresetować cały postęp?')) return;
+    localStorage.removeItem(LS_KEY);
+    allCheckboxes().forEach(function(cb){ cb.checked=false; cb.closest('.step').classList.remove('checked'); });
+    updateProgress(); updateChips();
+  };
+
+  window.copyText = function(text, btn){
+    var orig = btn.textContent;
+    function ok(){ btn.textContent='✓'; setTimeout(function(){ btn.textContent=orig; }, 1500); }
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).then(ok).catch(function(){ fallback(text, ok); }); }
+    else { fallback(text, ok); }
+  };
+
+  function fallback(text, cb){
+    var ta = document.createElement('textarea');
+    ta.value=text; ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); cb(); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  window.prepareFeedback = function(){
+    var parts = ['=== FEEDBACK — BRZYTWA TEST ==='];
+    var fields = [
+      ['Co testowałam', 'fb-scenario'],
+      ['Co się stało', 'fb-happened'],
+      ['Czego oczekiwałam', 'fb-expected'],
+      ['Zrzut', 'fb-screenshot'],
+      ['Urządzenie', 'fb-device'],
+      ['Uwagi ogólne', 'fb-general']
+    ];
+    fields.forEach(function(f){
+      var v = document.getElementById(f[1]).value.trim();
+      if(v) parts.push(f[0]+': '+v);
+    });
+    parts.push('==============================');
+    var text = parts.join('\n');
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).then(showResult).catch(function(){ fallback(text, showResult); }); }
+    else{ fallback(text, showResult); }
+  };
+  function showResult(){ document.getElementById('feedbackResult').style.display='block'; }
+
+  applyState();
+})();
+</script>
+</body>
+</html>
